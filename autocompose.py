@@ -6,7 +6,7 @@ import sys
 
 from collections import OrderedDict
 
-import docker
+import podman
 import pyaml
 
 pyaml.add_representer(bool,lambda s,o: s.represent_scalar('tag:yaml.org,2002:bool',['false','true'][o]))
@@ -14,12 +14,12 @@ IGNORE_VALUES = [None, "", [], "null", {}, "default", 0, ",", "no"]
 
 
 def list_container_names():
-    c = docker.from_env()
+    c = podman.from_env()
     return [container.name for container in c.containers.list(all=True)]
 
 
 def list_network_names():
-    c = docker.from_env()
+    c = podman.from_env()
     return [network.name for network in c.networks.list()]
 
 
@@ -27,7 +27,7 @@ def generate_network_info():
     networks = {}
 
     for network_name in list_network_names():
-        connection = docker.from_env()
+        connection = podman.from_env()
         network_attributes = connection.networks.get(network_name).attrs
 
         values = {
@@ -52,7 +52,7 @@ def generate_network_info():
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Generate docker-compose yaml definition from running container.",
+        description="Generate podman-compose yaml definition from running container.",
     )
     parser.add_argument(
         "-a",
@@ -141,7 +141,7 @@ def render(struct, args, networks, volumes):
 
 
 def generate(cname, createvolumes=False):
-    c = docker.from_env()
+    c = podman.from_env()
 
     try:
         cid = [x.short_id for x in c.containers.list(all=True) if cname == x.name or x.short_id in cname][0]
@@ -154,15 +154,15 @@ def generate(cname, createvolumes=False):
     # Build yaml dict structure
 
     cfile = {}
-    cfile[cattrs.get("Name")[1:]] = {}
-    ct = cfile[cattrs.get("Name")[1:]]
+    cfile[cattrs.get("Name")] = {}
+    ct = cfile[cattrs.get("Name")]
 
     default_networks = ["bridge", "host", "none"]
 
     values = {
         "cap_drop": cattrs.get("HostConfig", {}).get("CapDrop", None),
         "cgroup_parent": cattrs.get("HostConfig", {}).get("CgroupParent", None),
-        "container_name": cattrs.get("Name")[1:],
+        "container_name": cattrs.get("Name"),
         "devices": [],
         "dns": cattrs.get("HostConfig", {}).get("Dns", None),
         "dns_search": cattrs.get("HostConfig", {}).get("DnsSearch", None),
@@ -218,10 +218,10 @@ def generate(cname, createvolumes=False):
     else:
         networklist = c.networks.list()
         for network in networklist:
-            if network.attrs["Name"] in values["networks"]:
-                networks[network.attrs["Name"]] = {
-                    "external": (not network.attrs["Internal"]),
-                    "name": network.attrs["Name"],
+            if network.attrs["name"] in values["networks"]:
+                networks[network.attrs["name"]] = {
+                    "external": (not network.attrs["internal"]),
+                    "name": network.attrs["name"],
                 }
     #     volumes = {}
     #     if values['volumes'] is not None:

@@ -1,9 +1,9 @@
-# docker-autocompose
-Generates a docker-compose yaml definition from a docker container.
+# podman-autocompose
+Generates a podman-compose yaml definition from a podman container.
 
 Required Modules:
 * [pyaml](https://pypi.python.org/project/pyaml/)
-* [docker](https://pypi.python.org/project/docker)
+* [podman](https://pypi.python.org/project/podman)
 * [six](https://pypi.python.org/project/six)
 
 Example Usage:
@@ -21,15 +21,15 @@ The script defaults to outputting to compose file version 3, but use "-v 1" to o
     sudo python autocompose.py -v 1 apache-test
 
 
-Outputs a docker-compose compatible yaml structure:
+Outputs a podman-compose compatible yaml structure:
 
-[docker-compose reference](https://docs.docker.com/compose/)
+[podman-compose reference](https://github.com/containers/podman-compose)
 
-[docker-compose yaml file specification](https://docs.docker.com/compose/compose-file/)
+[podman-compose yaml file specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md)
 
-While experimenting with various docker containers from the Hub, I realized that I'd started several containers with complex options for volumes, ports, environment variables, etc. and there was no way I could remember all those commands without referencing the Hub page for each image if I needed to delete and re-create the container (for updates, or if something broke).
+While experimenting with various podman containers from the Hub, I realized that I'd started several containers with complex options for volumes, ports, environment variables, etc. and there was no way I could remember all those commands without referencing the Hub page for each image if I needed to delete and re-create the container (for updates, or if something broke).
 
-With this tool, I can easily generate docker-compose files for managing the containers that I've set up manually.
+With this tool, I can easily generate podman-compose files for managing the containers that I've set up manually.
 
 ## Native installation
 
@@ -37,31 +37,31 @@ You can install it system-wide from the project directory with a command:
 
 ```python setup.py install --optimize=1```
 
-You can also install directly from PyPI (https://pypi.org/project/docker-autocompose) with a command:
-```pipx install docker-autocompose```
+You can also install directly from PyPI (https://pypi.org/project/podman-autocompose) with a command:
+```pipx install podman-autocompose```
 
 There are unofficial packages available in the Arch User Repository:
-* [Stable](https://aur.archlinux.org/packages/docker-autocompose)
-* [Development (follows the master branch)](https://aur.archlinux.org/packages/docker-autocompose-git)
+* [Stable](https://aur.archlinux.org/packages/podman-autocompose)
+* [Development (follows the master branch)](https://aur.archlinux.org/packages/podman-autocompose-git)
 
-**AUR packages are provided by a third party and are not tested or updated by the maintainer(s) of the docker-autocompose project.**
+**AUR packages are provided by a third party and are not tested or updated by the maintainer(s) of the podman-autocompose project.**
 
-## Docker Usage
+## Podman Usage
 
-You can use this tool from a docker container by either cloning this repo and building the image or using the [automatically generated image on GitHub](https://github.com/Red5d/docker-autocompose/pkgs/container/docker-autocompose)
+You can use this tool from a podman container by either cloning this repo and building the image or using the [automatically generated image on GitHub](https://github.com/Red5d/podman-autocompose/pkgs/container/podman-autocompose)
 
 Pull the image from GitHub (supports both x86 and ARM)
 
-    docker pull ghcr.io/red5d/docker-autocompose:latest
+    podman pull ghcr.io/red5d/podman-autocompose:latest
 
-Use the new image to generate a docker-compose file from a running container or a list of space-separated container names or ids:
+Use the new image to generate a podman-compose file from a running container or a list of space-separated container names or ids:
 
-    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock ghcr.io/red5d/docker-autocompose <container-name-or-id> <additional-names-or-ids>...
+    podman run --rm -v /var/run/podman.sock:/var/run/podman.sock ghcr.io/red5d/podman-autocompose <container-name-or-id> <additional-names-or-ids>...
 
-To print out all containers in a docker-compose format:
+To print out all containers in a podman-compose format:
 
-    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock ghcr.io/red5d/docker-autocompose $(docker ps -aq)
+    podman run --rm -v /var/run/podman.sock:/var/run/podman.sock ghcr.io/red5d/podman-autocompose $(podman ps -aq)
     
 ## Contributing
 
-When making changes, please validate the output from the script by writing it to a file (docker-compose.yml or docker-compose.yaml) and running "docker-compose config" in the same folder with it to ensure that the resulting compose file will be accepted by docker-compose.
+When making changes, please validate the output from the script by writing it to a file (podman-compose.yml or podman-compose.yaml) and running "podman-compose config" in the same folder with it to ensure that the resulting compose file will be accepted by podman-compose.

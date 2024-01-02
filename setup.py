@@ -1,14 +1,14 @@
 from setuptools import setup, find_packages
 setup(
-    name = "docker-autocompose",
+    name = "podman-autocompose",
     version = "1.2.0",
-    description = "Generate a docker-compose yaml definition from a running container",
-    url = "https://github.com/Red5d/docker-autocompose",
-    author = "Red5d",
+    description = "Generate a podman-compose yaml definition from a running container",
+    url = "https://github.com/yuusou/podman-autocompose",
+    author = "yuusou",
     license = "GPLv2",
-    keywords = "docker yaml container",
+    keywords = "podman yaml container",
     packages = find_packages(),
-    install_requires = ['pyaml>=17.12.1', 'docker>=3.4.1','six>=1.16.0'],
+    install_requires = ['pyaml>=17.12.1', 'podman>=4.7.0','six>=1.16.0'],
     scripts = ['autocompose.py'],
     entry_points={
         'console_scripts': [
