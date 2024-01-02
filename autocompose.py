@@ -61,13 +61,6 @@ def main():
         help="Include all active containers",
     )
     parser.add_argument(
-        "-v",
-        "--version",
-        type=int,
-        default=3,
-        help="Compose file version (1 or 3)",
-    )
-    parser.add_argument(
         "cnames",
         nargs="*",
         type=str,
@@ -125,19 +118,15 @@ def main():
 
 
 def render(struct, args, networks, volumes):
-    # Render yaml file
-    if args.version == 1:
-        pyaml.p(OrderedDict(struct))
-    else:
-        ans = {"version": '3.6', "services": struct}
+    ans = {"version": '3.9', "services": struct}
 
-        if networks is not None:
-            ans["networks"] = networks
+    if networks is not None:
+        ans["networks"] = networks
 
-        if volumes is not None:
-            ans["volumes"] = volumes
+    if volumes is not None:
+        ans["volumes"] = volumes
 
-        pyaml.p(OrderedDict(ans), string_val_style='"')
+    pyaml.p(OrderedDict(ans), string_val_style='"')
 
 
 def generate(cname, createvolumes=False):
@@ -161,8 +150,12 @@ def generate(cname, createvolumes=False):
 
     values = {
         "cap_drop": cattrs.get("HostConfig", {}).get("CapDrop", None),
+        "cap_add": cattrs.get("HostConfig", {}).get("CapAdd", None),
         "cgroup_parent": cattrs.get("HostConfig", {}).get("CgroupParent", None),
         "container_name": cattrs.get("Name"),
+        "cpus": cattrs.get("HostConfig", {}).get("CpuShares", None),
+        "mem_limit": cattrs.get("HostConfig", {}).get("Memory", None),
+        "mem_reservation": cattrs.get("HostConfig", {}).get("MemoryReservation", None),
         "devices": [],
         "dns": cattrs.get("HostConfig", {}).get("Dns", None),
         "dns_search": cattrs.get("HostConfig", {}).get("DnsSearch", None),
@@ -255,7 +248,7 @@ def generate(cname, createvolumes=False):
 
     # Check for command and add it if present.
     if cattrs.get("Config", {}).get("Cmd") is not None:
-        values["command"] = cattrs.get("Config", {}).get("Cmd")
+        values["command"] = " ".join(cattrs.get("Config", {}).get("Cmd"))
 
     # Check for exposed/bound ports and add them if needed.
     try:

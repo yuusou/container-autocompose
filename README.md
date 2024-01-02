@@ -14,20 +14,19 @@ Required Modules:
 * [six](https://pypi.python.org/project/six)
 
 Example Usage:
-
 ```sudo python3 autocompose.py <container-name-or-id>```
 
-Generate a compose file for multiple containers together:
+For all containers:
+```sudo python3 autocompose.py -a```
 
+Generate a compose file for multiple containers together:
 ```sudo python3 autocompose.py apache-test mysql-test```
 
 The script defaults to outputting to compose file version 3, but use "-v 1" to output to version 1:
-
 ```sudo python3 autocompose.py -v 1 apache-test```
 
 If you get an error requiring CONTAINER_HOST environment variable, try the following (adjusting as necessary):
-
-```CONTAINER_HOST=unix:///var/run/podman/podman.sock sudo python3 autocompose.py <container-name-or-id>```
+```CONTAINER_HOST=unix:///var/run/podman/podman.sock sudo python3 autocompose.py -a```
 
 Outputs a podman-compose compatible yaml structure:
 
