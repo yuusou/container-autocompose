@@ -118,7 +118,7 @@ def main():
 
 
 def render(struct, args, networks, volumes):
-    ans = {"version": '3.9', "services": struct}
+    ans = {"version": '3.6', "services": struct}
 
     if networks is not None:
         ans["networks"] = networks
