@@ -1,6 +1,13 @@
 # podman-autocompose
 Generates a podman-compose yaml definition from a podman container.
 
+## Wee disclaimer
+I'm not well versed in either Docker nor Podman, much less python.
+I forked docker-autocomplete and did what needed doing to make it work for podman.
+
+If you have problems, please raise an issue and I'll do my best, though don't expect miracles. :)
+
+
 Required Modules:
 * [pyaml](https://pypi.python.org/project/pyaml/)
 * [podman](https://pypi.python.org/project/podman)
