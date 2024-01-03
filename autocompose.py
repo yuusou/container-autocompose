@@ -161,6 +161,10 @@ def generate(cname, createvolumes=False):
             "reservations": {
                 "memory": cattrs.get("HostConfig", {}).get("MemoryReservation", None),
             },
+            "restart_policy": {
+                "condition": cattrs.get("HostConfig", {}).get("RestartPolicy", {}).get("Name", None),
+                "max_attempts": cattrs.get("HostConfig", {}).get("RestartPolicy", {}).get("MaximumRetryCount", None),
+            },
         },
         "devices": [],
         "dns": cattrs.get("HostConfig", {}).get("Dns", None),
@@ -194,7 +198,6 @@ def generate(cname, createvolumes=False):
         "ipc": cattrs.get("HostConfig", {}).get("IpcMode", None),
         "mac_address": cattrs.get("NetworkSettings", {}).get("MacAddress", None),
         "privileged": cattrs.get("HostConfig", {}).get("Privileged", None),
-        "restart": cattrs.get("HostConfig", {}).get("RestartPolicy", {}).get("Name", None),
         "read_only": cattrs.get("HostConfig", {}).get("ReadonlyRootfs", None),
         "stdin_open": cattrs.get("Config", {}).get("OpenStdin", None),
         "tty": cattrs.get("Config", {}).get("Tty", None),
