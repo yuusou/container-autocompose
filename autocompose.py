@@ -157,10 +157,10 @@ def generate(cname, createvolumes=False):
             "resources": {
                 "limits": {
                     "cpus": cattrs.get("HostConfig", {}).get("CpuShares", None),
-                    "memory": cattrs.get("HostConfig", {}).get("Memory", None),
+                    "memory": str(cattrs.get("HostConfig", {}).get("Memory", None)),
                 },
                 "reservations": {
-                    "memory": cattrs.get("HostConfig", {}).get("MemoryReservation", None),
+                    "memory": str(cattrs.get("HostConfig", {}).get("MemoryReservation", None)),
                 },
             },
             "restart_policy": {
@@ -184,10 +184,10 @@ def generate(cname, createvolumes=False):
             x for x in cattrs.get("NetworkSettings", {}).get("Networks", {}).keys() if x not in default_networks
         },
         "security_opt": cattrs.get("HostConfig", {}).get("SecurityOpt"),
-        "ulimits": cattrs.get("HostConfig", {}).get("Ulimits"),
         # the line below would not handle type bind
         #        'volumes': [f'{m["Name"]}:{m["Destination"]}' for m in cattrs.get('Mounts'] if m['Type'] == 'volume'],
         "mounts": cattrs.get("Mounts"),  # this could be moved outside of the dict. will only use it for generate
+        "ulimits": {},
         "volume_driver": cattrs.get("HostConfig", {}).get("VolumeDriver", None),
         "volumes_from": cattrs.get("HostConfig", {}).get("VolumesFrom", None),
         "entrypoint": cattrs.get("Config", {}).get("Entrypoint", None),
@@ -208,6 +208,20 @@ def generate(cname, createvolumes=False):
         values["devices"] = [
             x["PathOnHost"] + ":" + x["PathInContainer"] for x in cattrs.get("HostConfig", {}).get("Devices")
         ]
+    
+    # Populate ulimits
+    if cattrs.get("HostConfig", {}).get("Ulimits"):
+        for x in cattrs.get("HostConfig", {}).get("Ulimits"):
+            if x["Soft"] == x["Hard"]:
+                ulimit = { x["Name"].replace('RLIMIT_', '').lower(): x["Hard"] }
+            else:
+                ulimit = {
+                    x["Name"].replace('RLIMIT_', '').lower(): {
+                        "soft": x["Soft"],
+                        "hard": x["Hard"],
+                    }
+                }
+            values["ulimits"].update(ulimit)
 
     networks = {}
     if values["networks"] == set():
@@ -284,7 +298,7 @@ def generate(cname, createvolumes=False):
     except (KeyError, TypeError):
         # No ports exposed/bound. Continue without them.
         ports = None
-
+    
     # Iterate through values to finish building yaml dict.
     for key in values:
         value = values[key]
