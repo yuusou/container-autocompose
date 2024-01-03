@@ -153,9 +153,15 @@ def generate(cname, createvolumes=False):
         "cap_add": cattrs.get("HostConfig", {}).get("CapAdd", None),
         "cgroup_parent": cattrs.get("HostConfig", {}).get("CgroupParent", None),
         "container_name": cattrs.get("Name"),
-        "cpus": cattrs.get("HostConfig", {}).get("CpuShares", None),
-        "mem_limit": cattrs.get("HostConfig", {}).get("Memory", None),
-        "mem_reservation": cattrs.get("HostConfig", {}).get("MemoryReservation", None),
+        "deploy": {
+            "limits": {
+                "cpus": cattrs.get("HostConfig", {}).get("CpuShares", None),
+                "memory": cattrs.get("HostConfig", {}).get("Memory", None),
+            },
+            "reservations": {
+                "memory": cattrs.get("HostConfig", {}).get("MemoryReservation", None),
+            },
+        },
         "devices": [],
         "dns": cattrs.get("HostConfig", {}).get("Dns", None),
         "dns_search": cattrs.get("HostConfig", {}).get("DnsSearch", None),
