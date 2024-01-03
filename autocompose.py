@@ -118,7 +118,7 @@ def main():
 
 
 def render(struct, args, networks, volumes):
-    ans = {"version": '3.6', "services": struct}
+    ans = {"version": '3.8', "services": struct}
 
     if networks is not None:
         ans["networks"] = networks
@@ -154,12 +154,14 @@ def generate(cname, createvolumes=False):
         "cgroup_parent": cattrs.get("HostConfig", {}).get("CgroupParent", None),
         "container_name": cattrs.get("Name"),
         "deploy": {
-            "limits": {
-                "cpus": cattrs.get("HostConfig", {}).get("CpuShares", None),
-                "memory": cattrs.get("HostConfig", {}).get("Memory", None),
-            },
-            "reservations": {
-                "memory": cattrs.get("HostConfig", {}).get("MemoryReservation", None),
+            "resources": {
+                "limits": {
+                    "cpus": cattrs.get("HostConfig", {}).get("CpuShares", None),
+                    "memory": cattrs.get("HostConfig", {}).get("Memory", None),
+                },
+                "reservations": {
+                    "memory": cattrs.get("HostConfig", {}).get("MemoryReservation", None),
+                },
             },
             "restart_policy": {
                 "condition": cattrs.get("HostConfig", {}).get("RestartPolicy", {}).get("Name", None),
@@ -174,8 +176,6 @@ def generate(cname, createvolumes=False):
         "image": cattrs.get("Config", {}).get("Image", None),
         "labels": cattrs.get("Config", {}).get("Labels", {}),
         "links": cattrs.get("HostConfig", {}).get("Links"),
-        #'log_driver': cattrs.get('HostConfig']['LogConfig']['Type'],
-        #'log_opt': cattrs.get('HostConfig']['LogConfig']['Config'],
         "logging": {
             "driver": cattrs.get("HostConfig", {}).get("LogConfig", {}).get("Type", None),
             "options": cattrs.get("HostConfig", {}).get("LogConfig", {}).get("Config", None),
