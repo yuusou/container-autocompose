@@ -1,13 +1,14 @@
 #! /usr/bin/env python3
 import argparse
-import datetime
 import re
 import sys
 
 from collections import OrderedDict
+from collections import abc
 
 import podman
 import pyaml
+
 
 pyaml.add_representer(bool,lambda s,o: s.represent_scalar('tag:yaml.org,2002:bool',['false','true'][o]))
 IGNORE_VALUES = [None, "", [], "null", {}, "default", 0, ",", "no"]
@@ -32,7 +33,6 @@ def generate_network_info():
 
         values = {
             "name": network_attributes.get("name"),
-            #"scope": network_attributes.get("Scope", "local"),
             "driver": network_attributes.get("driver", None),
             "enable_ipv6": network_attributes.get("ipv6_enabled", False),
             "internal": network_attributes.get("internal", False),
@@ -44,6 +44,16 @@ def generate_network_info():
         networks[network_name] = {key: value for key, value in values.items()}
 
     return networks
+
+
+def clean_values(values):
+    mapping = values
+    for key, value in list(mapping.items()):
+        if isinstance(value, abc.Mapping):
+            mapping[key] = clean_values(value)
+        if mapping[key] in IGNORE_VALUES:
+            del mapping[key]
+    return mapping
 
 
 def main():
@@ -181,9 +191,7 @@ def generate(cname, createvolumes=False):
         },
         "security_opt": cattrs.get("HostConfig", {}).get("SecurityOpt"),
         "ulimits": {},
-        # the line below would not handle type bind
-        #        'volumes': [f'{m["Name"]}:{m["Destination"]}' for m in cattrs.get('Mounts'] if m['Type'] == 'volume'],
-        "mounts": cattrs.get("Mounts"),  # this could be moved outside of the dict. will only use it for generate
+        "mounts": [],  # this could be moved outside of the dict. will only use it for generate
         "volume_driver": cattrs.get("HostConfig", {}).get("VolumeDriver", None),
         "volumes_from": cattrs.get("HostConfig", {}).get("VolumesFrom", None),
         "entrypoint": cattrs.get("Config", {}).get("Entrypoint", None),
@@ -201,14 +209,16 @@ def generate(cname, createvolumes=False):
     }
 
     # Populate devices key if device values are present
-    if cattrs.get("HostConfig", {}).get("Devices"):
+    devices = cattrs.get("HostConfig", {}).get("Devices")
+    if devices:
         values["devices"] = [
             x["PathOnHost"] + ":" + x["PathInContainer"] for x in cattrs.get("HostConfig", {}).get("Devices")
         ]
     
     # Populate ulimits
-    if cattrs.get("HostConfig", {}).get("Ulimits"):
-        for x in cattrs.get("HostConfig", {}).get("Ulimits"):
+    ulimits = cattrs.get("HostConfig", {}).get("Ulimits")
+    if ulimits:
+        for x in ulimits:
             if x["Soft"] == x["Hard"]:
                 ulimit = { x["Name"].replace('RLIMIT_', '').lower(): x["Hard"] }
             else:
@@ -248,8 +258,9 @@ def generate(cname, createvolumes=False):
     # also includes the read only option
     volumes = {}
     mountpoints = []
-    if values["mounts"] is not None:
-        for mount in values["mounts"]:
+    mounts = cattrs.get("Mounts")
+    if mounts:
+        for mount in mounts:
             destination = mount["Destination"]
             if not mount["RW"]:
                 destination = destination + ":ro"
@@ -267,11 +278,12 @@ def generate(cname, createvolumes=False):
     values["mounts"] = None  # remove this temporary data from the returned data
 
     # Check for command and add it if present.
-    if cattrs.get("Config", {}).get("Cmd") is not None:
-        for x in cattrs.get("Config", {}).get("Cmd"):
+    commands = cattrs.get("Config", {}).get("Cmd")
+    if commands:
+        for x in commands:
             x = '"' + x + '"' if " " in x else x
             x = x.replace("$","$$")
-            values["command"] = " ".join([values["command"], x])
+            values["command"] = " ".join([values["command"], x]).strip()
 
     # Check for exposed/bound ports and add them if needed.
     try:
@@ -300,10 +312,8 @@ def generate(cname, createvolumes=False):
         ports = None
     
     # Iterate through values to finish building yaml dict.
-    for key in values:
-        value = values[key]
-        if value not in IGNORE_VALUES:
-            ct[key] = value
+    for key, value in clean_values(values).items():
+        ct[key] = value 
 
     return cfile, networks, volumes
 
