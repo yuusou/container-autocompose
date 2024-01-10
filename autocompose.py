@@ -31,17 +31,13 @@ def generate_network_info():
         network_attributes = connection.networks.get(network_name).attrs
 
         values = {
-            "name": network_attributes.get("Name"),
-            "scope": network_attributes.get("Scope", "local"),
-            "driver": network_attributes.get("Driver", None),
-            "enable_ipv6": network_attributes.get("EnableIPv6", False),
-            "internal": network_attributes.get("Internal", False),
+            "name": network_attributes.get("name"),
+            #"scope": network_attributes.get("Scope", "local"),
+            "driver": network_attributes.get("driver", None),
+            "enable_ipv6": network_attributes.get("ipv6_enabled", False),
+            "internal": network_attributes.get("internal", False),
             "ipam": {
-                "driver": network_attributes.get("IPAM", {}).get("Driver", "default"),
-                "config": [
-                    {key.lower(): value for key, value in config.items()}
-                    for config in network_attributes.get("IPAM", {}).get("Config", [])
-                ],
+                "driver": network_attributes.get("ipam_options", {}).get("driver", "none"),
             },
         }
 
@@ -184,10 +180,10 @@ def generate(cname, createvolumes=False):
             x for x in cattrs.get("NetworkSettings", {}).get("Networks", {}).keys() if x not in default_networks
         },
         "security_opt": cattrs.get("HostConfig", {}).get("SecurityOpt"),
+        "ulimits": {},
         # the line below would not handle type bind
         #        'volumes': [f'{m["Name"]}:{m["Destination"]}' for m in cattrs.get('Mounts'] if m['Type'] == 'volume'],
         "mounts": cattrs.get("Mounts"),  # this could be moved outside of the dict. will only use it for generate
-        "ulimits": {},
         "volume_driver": cattrs.get("HostConfig", {}).get("VolumeDriver", None),
         "volumes_from": cattrs.get("HostConfig", {}).get("VolumesFrom", None),
         "entrypoint": cattrs.get("Config", {}).get("Entrypoint", None),
@@ -201,6 +197,7 @@ def generate(cname, createvolumes=False):
         "read_only": cattrs.get("HostConfig", {}).get("ReadonlyRootfs", None),
         "stdin_open": cattrs.get("Config", {}).get("OpenStdin", None),
         "tty": cattrs.get("Config", {}).get("Tty", None),
+        "command": "",
     }
 
     # Populate devices key if device values are present
@@ -271,7 +268,10 @@ def generate(cname, createvolumes=False):
 
     # Check for command and add it if present.
     if cattrs.get("Config", {}).get("Cmd") is not None:
-        values["command"] = " ".join(cattrs.get("Config", {}).get("Cmd"))
+        for x in cattrs.get("Config", {}).get("Cmd"):
+            x = '"' + x + '"' if " " in x else x
+            x = x.replace("$","$$")
+            values["command"] = " ".join([values["command"], x])
 
     # Check for exposed/bound ports and add them if needed.
     try:
