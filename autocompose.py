@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+"""Generate docker-compose.yml from running containers."""
 import argparse
 import re
 import sys
@@ -9,21 +10,25 @@ import podman
 import pyaml
 
 
-pyaml.add_representer(bool,lambda s,o: s.represent_scalar('tag:yaml.org,2002:bool',['false','true'][o]))
+pyaml.add_representer(bool,lambda s,o:
+                      s.represent_scalar('tag:yaml.org,2002:bool',['false','true'][o]))
 IGNORE_VALUES = [None, "", [], "null", {}, "default", 0, ",", "no"]
 
 
 def list_container_names():
+    """Function collecting list of container names"""
     c = podman.from_env()
     return [container.name for container in c.containers.list(all=True)]
 
 
 def list_network_names():
+    """Function collecting list of network names"""
     c = podman.from_env()
     return [network.name for network in c.networks.list()]
 
 
 def generate_network_info():
+    """Function generating network information"""
     networks = {}
 
     for network_name in list_network_names():
@@ -46,6 +51,7 @@ def generate_network_info():
 
 
 def clean_values(values):
+    """Function removing unused values from compose.yml."""
     mapping = values
     for key, value in list(mapping.items()):
         if isinstance(value, abc.Mapping):
@@ -56,6 +62,7 @@ def clean_values(values):
 
 
 def main():
+    """Main function for creating the docker-compose.yml."""
     parser = argparse.ArgumentParser(
         description="Generate podman-compose yaml definition from running container.",
     )
@@ -103,9 +110,9 @@ def main():
 
         services.update(cfile)
 
-        if not c_networks == None:
+        if c_networks is not None:
             networks.update(c_networks)
-        if not c_volumes == None:
+        if c_volumes is not None:
             volumes.update(c_volumes)
 
     # moving the networks = None statements outside of the for loop. Otherwise any container could reset it.
@@ -122,6 +129,7 @@ def main():
 
 
 def render(services, networks, volumes):
+    """Function for rendering docker-compose.yml."""
     ans = {"version": '3.8'}
 
     if services is not None:
@@ -137,6 +145,7 @@ def render(services, networks, volumes):
 
 
 def generate(cname, createvolumes=False):
+    """Function for creating the services key."""
     c = podman.from_env()
 
     try:
@@ -215,7 +224,7 @@ def generate(cname, createvolumes=False):
         values["devices"] = [
             x["PathOnHost"] + ":" + x["PathInContainer"] for x in cattrs.get("HostConfig", {}).get("Devices")
         ]
-    
+
     # Populate ulimits
     ulimits = cattrs.get("HostConfig", {}).get("Ulimits")
     if ulimits:
@@ -311,10 +320,10 @@ def generate(cname, createvolumes=False):
     except (KeyError, TypeError):
         # No ports exposed/bound. Continue without them.
         ports = None
-    
+
     # Iterate through values to finish building yaml dict.
     for key, value in clean_values(values).items():
-        ct[key] = value 
+        ct[key] = value
 
     return cfile, networks, volumes
 
