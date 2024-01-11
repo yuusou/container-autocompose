@@ -3,8 +3,7 @@ import argparse
 import re
 import sys
 
-from collections import OrderedDict
-from collections import abc
+from collections import OrderedDict, abc
 
 import podman
 import pyaml
@@ -95,15 +94,14 @@ def main():
         cfilter = re.compile(args.filter)
         container_names = [c for c in container_names if cfilter.search(c)]
 
-    struct = {}
+    services = {}
     networks = {}
     volumes = {}
-    containers = {}
 
     for cname in container_names:
         cfile, c_networks, c_volumes = generate(cname, createvolumes=args.createvolumes)
 
-        struct.update(cfile)
+        services.update(cfile)
 
         if not c_networks == None:
             networks.update(c_networks)
@@ -120,11 +118,14 @@ def main():
         host_networks = generate_network_info()
         networks = host_networks
 
-    render(struct, args, networks, volumes)
+    render(services, networks, volumes)
 
 
-def render(struct, args, networks, volumes):
-    ans = {"version": '3.8', "services": struct}
+def render(services, networks, volumes):
+    ans = {"version": '3.8'}
+
+    if services is not None:
+        ans["services"] = services
 
     if networks is not None:
         ans["networks"] = networks
@@ -157,7 +158,7 @@ def generate(cname, createvolumes=False):
     values = {
         "cap_drop": cattrs.get("HostConfig", {}).get("CapDrop", None),
         "cap_add": cattrs.get("HostConfig", {}).get("CapAdd", None),
-        "cgroup_parent": cattrs.get("HostConfig", {}).get("CgroupParent", None),
+        #"cgroup_parent": cattrs.get("HostConfig", {}).get("CgroupParent", None),
         "container_name": cattrs.get("Name"),
         "deploy": {
             "resources": {
@@ -180,15 +181,15 @@ def generate(cname, createvolumes=False):
         "environment": cattrs.get("Config", {}).get("Env", None),
         "extra_hosts": cattrs.get("HostConfig", {}).get("ExtraHosts", None),
         "image": cattrs.get("Config", {}).get("Image", None),
-        "labels": cattrs.get("Config", {}).get("Labels", {}),
+        #"labels": cattrs.get("Config", {}).get("Labels", {}),
         "links": cattrs.get("HostConfig", {}).get("Links"),
         "logging": {
             "driver": cattrs.get("HostConfig", {}).get("LogConfig", {}).get("Type", None),
             "options": cattrs.get("HostConfig", {}).get("LogConfig", {}).get("Config", None),
         },
-        "networks": {
+        "networks": [
             x for x in cattrs.get("NetworkSettings", {}).get("Networks", {}).keys() if x not in default_networks
-        },
+        ],
         "security_opt": cattrs.get("HostConfig", {}).get("SecurityOpt"),
         "ulimits": {},
         "mounts": [],  # this could be moved outside of the dict. will only use it for generate
@@ -199,7 +200,7 @@ def generate(cname, createvolumes=False):
         "working_dir": cattrs.get("Config", {}).get("WorkingDir", None),
         "domainname": cattrs.get("Config", {}).get("Domainname", None),
         "hostname": cattrs.get("Config", {}).get("Hostname", None),
-        "ipc": cattrs.get("HostConfig", {}).get("IpcMode", None),
+        #"ipc": cattrs.get("HostConfig", {}).get("IpcMode", None),
         "mac_address": cattrs.get("NetworkSettings", {}).get("MacAddress", None),
         "privileged": cattrs.get("HostConfig", {}).get("Privileged", None),
         "read_only": cattrs.get("HostConfig", {}).get("ReadonlyRootfs", None),
