@@ -40,7 +40,11 @@ Outputs yaml to stdout compatible with podman-compose and docker-compose (right 
 For operating systems that externally manage python3 and pip (Ubuntu, Fedora, maybe others), you'll need to manually install the python3-podman or python3-docker package.
 You can install them system-wide from the project directory with a command:
 
+For Podman
 ```python3 setup.py install --optimize=1```
+
+For Docker
+```python3 setup.py install --optimize=1 --docker```
     
 ## Contributing
 
