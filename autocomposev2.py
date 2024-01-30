@@ -184,7 +184,8 @@ def generate_services(con, args) -> tuple[dict, argparse.Namespace]:
         ports = [
             cattrs.get("HostConfig", {}).get("PortBindings", {})[key][0]["HostIp"] + ":" +
             cattrs.get("HostConfig", {}).get("PortBindings", {})[key][0]["HostPort"] + ":" + key
-            for key in cattrs.get("HostConfig", {}).get("PortBindings")
+            for key in cattrs.get("HostConfig", {}).get("PortBindings") \
+                if cattrs.get("HostConfig", {}).get("PortBindings", {})[key] is not None
         ]
         if ports not in values["expose"]:
             for index, port in enumerate(ports):
