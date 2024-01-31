@@ -100,6 +100,7 @@ def generate_services(con, args) -> tuple[dict, argparse.Namespace]:
             "working_dir": cattrs.get("Config", {}).get("WorkingDir", None),
             "privileged": cattrs.get("HostConfig", {}).get("Privileged", None),
             "read_only": cattrs.get("HostConfig", {}).get("ReadonlyRootfs", None),
+            "sysctls": cattrs.get("HostConfig", {}).get("Sysctls", {}),
             # Placeholders handled further down
             "networks": [],
             "network_mode": "",
@@ -210,7 +211,7 @@ def generate_services(con, args) -> tuple[dict, argparse.Namespace]:
                     values["volumes"].append(volume["Name"] + ":" + destination)
                     if not args.createvolumes:
                         args.vnames = f"{args.vnames} {volume['Name']}"
-                elif volume["Type"] == "bind":
+                else:
                     values["volumes"].append(volume["Source"] + ":" + destination)
 
         # Add container to services key
