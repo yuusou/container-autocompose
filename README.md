@@ -1,20 +1,24 @@
-# podman-autocompose
-Generates a podman-compose yaml definition from a podman container.
+# container-autocompose
+Generates a yaml file from docker or podman containers.
+This is a fork of [docker-autocomplete](https://github.com/Red5d/docker-autocompose) 
+I've modified it to be compatible with both docker and podman.
 
+With this tool, you can easily generate container-compose.yml files for managing the containers that you've manually set up.
 ## Wee disclaimer
 I'm not well versed in either Docker nor Podman, much less python.
-I forked docker-autocomplete and did what needed doing to make it work for podman.
+If you have problems, please raise an issue and I'll do my best. :)
 
-If you have problems, please raise an issue and I'll do my best, though don't expect miracles. :)
+While experimenting with various containers from the Hub, I realized that I'd started several containers with complex options for volumes, ports, environment variables, etc. and there was no way I could remember all those commands without referencing the Hub page for each image if I needed to delete and re-create the container (for updates, or if something broke).
 
-## Requirements and Usage
+## Requirements
 Required Modules:
-* [pyaml](https://pypi.python.org/project/pyaml/)
-* [podman](https://pypi.python.org/project/podman)
-* [six](https://pypi.python.org/project/six)
+* [strictyaml](https://pypi.org/project/strictyaml/)
+* [podman](https://pypi.python.org/project/podman) or
+* [docker](https://pypi.python.org/project/docker)
 
+## Usage
 Example Usage:
-```sudo python3 autocompose.py <container-name-or-id>```
+```sudo python3 autocompose.py <space-separated-container-names-or-ids>```
 
 For all containers:
 ```sudo python3 autocompose.py -a```
@@ -22,27 +26,25 @@ For all containers:
 Generate a compose file for multiple containers together:
 ```sudo python3 autocompose.py apache-test mysql-test```
 
-The script defaults to outputting to compose file version 3, but use "-v 1" to output to version 1:
-```sudo python3 autocompose.py -v 1 apache-test```
-
 If you get an error requiring CONTAINER_HOST environment variable, try the following (adjusting as necessary):
 ```CONTAINER_HOST=unix:///var/run/podman/podman.sock sudo python3 autocompose.py -a```
 
-Outputs a podman-compose compatible yaml structure:
-
-[podman-compose reference](https://github.com/containers/podman-compose)
-
-[podman-compose yaml file specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md)
-
-While experimenting with various ~~docker~~containers from the Hub, I realized that I'd started several containers with complex options for volumes, ports, environment variables, etc. and there was no way I could remember all those commands without referencing the Hub page for each image if I needed to delete and re-create the container (for updates, or if something broke).
-
-With this tool, you can easily generate podman-compose files for managing the containers that I've set up manually.
+## References
+Outputs yaml to stdout compatible with podman-compose and docker-compose (right now there's no difference between them):
+[podman-compose reference](https://github.com/docker/compose)
+[podman-compose yaml file specification](https://docs.docker.com/compose/compose-file/compose-file-v3/)
+[docker-compose reference](https://github.com/containers/podman-compose)
+[docker-compose yaml file specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md)
 
 ## Native installation
-For operating systems that externally manage python3 and pip (Ubuntu, Fedora, maybe others), you'll need to install the python3-podman package.
-You can install it system-wide from the project directory with a command:
+For operating systems that externally manage python3 and pip (Ubuntu, Fedora, maybe others), you'll need to manually install the python3-podman or python3-docker package.
+You can install them system-wide from the project directory with a command:
 
+For Podman
 ```python3 setup.py install --optimize=1```
+
+For Docker
+```python3 setup.py install --optimize=1 --docker```
     
 ## Contributing
 

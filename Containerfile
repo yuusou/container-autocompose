@@ -1,5 +1,5 @@
 FROM python:3-alpine
-LABEL org.opencontainers.image.source https://github.com/yuusou/podman-autocompose
+LABEL org.opencontainers.image.source https://github.com/yuusou/container-autocompose
 
 WORKDIR /usr/src/app
 
