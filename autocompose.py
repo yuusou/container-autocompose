@@ -56,7 +56,7 @@ def generate_services(con, args) -> tuple[dict, argparse.Namespace]:
     for name in names:
         try:
             cid = [c.short_id for c in con.containers.list(all=True) \
-                   if name in (c.short_id, c.name)][0]
+                   if name in (c.short_id, c.name) or c.short_id in name][0]
         except IndexError:
             print(f"There's no container {name}.", file=sys.stderr)
             continue
