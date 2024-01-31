@@ -96,7 +96,6 @@ def generate_services(con, args) -> tuple[dict, argparse.Namespace]:
             "dns": cattrs.get("HostConfig", {}).get("Dns", None),
             "dns_search": cattrs.get("HostConfig", {}).get("DnsSearch", None),
             "environment": cattrs.get("Config", {}).get("Env", None),
-            "entrypoint": cattrs.get("Config", {}).get("Entrypoint", None),
             "user": cattrs.get("Config", {}).get("User", None),
             "working_dir": cattrs.get("Config", {}).get("WorkingDir", None),
             "privileged": cattrs.get("HostConfig", {}).get("Privileged", None),
@@ -106,6 +105,7 @@ def generate_services(con, args) -> tuple[dict, argparse.Namespace]:
             "network_mode": "",
             "ports": [],
             "expose": [],
+            "entrypoint": "",
             "command": "",
             "ulimits": {},
             "devices": [],
@@ -166,6 +166,17 @@ def generate_services(con, args) -> tuple[dict, argparse.Namespace]:
                 x = '"' + x + '"' if " " in x else x
                 x = x.replace("$","$$")
                 values["command"] = " ".join([values["command"], x]).strip()
+
+        # Populate entrypoint key if entrypoint is present
+        entrypoint = cattrs.get("Config", {}).get("Entrypoint", None)
+        if entrypoint and isinstance(entrypoint, list):
+            for x in entrypoint:
+                x = '"' + x + '"' if " " in x else x
+                x = x.replace("$","$$")
+                values["entrypoint"] = " ".join([values["entrypoint"], x]).strip()
+        else:
+            values["entrypoint"] = cattrs.get("Config", {}).get("Entrypoint", None)
+
 
         # Populate ulimits key if ulimit values are present
         ulimits = cattrs.get("HostConfig", {}).get("Ulimits")
