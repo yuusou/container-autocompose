@@ -143,10 +143,13 @@ def generate_services(con, args) -> tuple[dict, argparse.Namespace]:
                         }
                         break
         elif cattrs.get("NetworkSettings", {}).get("Networks", {}) is not None:
-            values["network_mode"] = cattrs.get("NetworkSettings", {}).get("Networks", {})[0]
+            values["network_mode"] = cattrs.get("HostConfig", {}).get("NetworkMode", None)
 
         # Populate port forwards or exposed ports if present
-        values["expose"] = list(cattrs.get("Config", {}).get("ExposedPorts", {}).keys())
+        values["expose"] = [
+            key.split("/")[0] for key in cattrs.get("HostConfig", {}).get("PortBindings") \
+                if cattrs.get("HostConfig", {}).get("PortBindings", {})[key] is None
+        ]
         ports = [
             cattrs.get("HostConfig", {}).get("PortBindings", {})[key][0]["HostIp"] + ":" +
             cattrs.get("HostConfig", {}).get("PortBindings", {})[key][0]["HostPort"] + ":" + key
