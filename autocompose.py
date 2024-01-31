@@ -100,7 +100,6 @@ def generate_services(con, args) -> tuple[dict, argparse.Namespace]:
             "working_dir": cattrs.get("Config", {}).get("WorkingDir", None),
             "privileged": cattrs.get("HostConfig", {}).get("Privileged", None),
             "read_only": cattrs.get("HostConfig", {}).get("ReadonlyRootfs", None),
-            "sysctls": cattrs.get("HostConfig", {}).get("Sysctls", {}),
             # Placeholders handled further down
             "networks": [],
             "network_mode": "",
@@ -109,6 +108,7 @@ def generate_services(con, args) -> tuple[dict, argparse.Namespace]:
             "entrypoint": "",
             "command": "",
             "ulimits": {},
+            "sysctls": [],
             "devices": [],
             "volumes": [],
             # These are commented out but usable, uncomment if needed
@@ -196,6 +196,12 @@ def generate_services(con, args) -> tuple[dict, argparse.Namespace]:
                         }
                     }
                 values["ulimits"].update(ulimit)
+
+        # Populate sysctls key if sysctls are present
+        create_command = cattrs.get("Config", {}).get("CreateCommand", [])
+        if create_command:
+            sysctls = [i+1 for i, x in enumerate(create_command) if x == "--sysctl"]
+            values["sysctls"] = [create_command[i] for i in sysctls]
 
         # Populate devices key if device values are present
         devices = cattrs.get("HostConfig", {}).get("Devices")
