@@ -1,9 +1,9 @@
 # container-autocompose
 Generates a yaml file from docker or podman containers.
-This is a fork of [docker-autocomplete](https://github.com/Red5d/docker-autocompose) 
+This is a fork of [docker-autocompose](https://github.com/Red5d/docker-autocompose) 
 I've modified it to be compatible with both docker and podman.
 
-With this tool, you can easily generate container-compose.yml files for managing the containers that you've manually set up.
+With this tool, you can easily generate container-compose.yml / docker-compose.yml files for managing the containers that you've manually set up.
 ## Wee disclaimer
 I'm not well versed in either Docker nor Podman, much less python.
 If you have problems, please raise an issue and I'll do my best. :)
@@ -26,7 +26,7 @@ For all containers:
 Generate a compose file for multiple containers together:
 ```sudo python3 autocompose.py apache-test mysql-test```
 
-If you get an error requiring CONTAINER_HOST environment variable, try the following (adjusting as necessary):
+If you get an error requiring CONTAINER_HOST or DOCKER_HOST environment variable, try the following (adjusting as necessary):
 ```CONTAINER_HOST=unix:///var/run/podman/podman.sock sudo python3 autocompose.py -a```
 
 ## References
