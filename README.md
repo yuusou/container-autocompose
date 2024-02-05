@@ -31,10 +31,10 @@ If you get an error requiring CONTAINER_HOST or DOCKER_HOST environment variable
 
 ## References
 Outputs yaml to stdout compatible with podman-compose and docker-compose (right now there's no difference between them):
-* [podman-compose reference](https://github.com/docker/compose)
-* [podman-compose yaml file specification](https://docs.docker.com/compose/compose-file/compose-file-v3/)
-* [docker-compose reference](https://github.com/containers/podman-compose)
-* [docker-compose yaml file specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md)
+* [podman-compose reference](https://github.com/containers/podman-compose)
+* [podman-compose yaml file specification](https://github.com/compose-spec/compose-spec/blob/master/spec.md)
+* [docker-compose reference](https://github.com/docker/compose)
+* [docker-compose yaml file specification](https://docs.docker.com/compose/compose-file/compose-file-v3/)
 
 ## Native installation
 For operating systems that externally manage python3 and pip (Ubuntu, Fedora, maybe others), you'll need to manually install the python3-podman or python3-docker package.
