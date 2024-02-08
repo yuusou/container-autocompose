@@ -8,21 +8,46 @@ autocompose.py
 import sys
 import argparse
 import re
+import importlib
 
 from collections import OrderedDict, abc
 from strictyaml import as_document, YAML
 
-try:
-    import podman as container
-except ImportError:
-    try:
-        import docker as container
-    except ImportError:
-        print("Neither podman nor docker modules found.", file=sys.stderr)
-        sys.exit(1)
-
 # Values that won't make the container-compose.yml
 IGNORE_VALUES = [None, "", [], "null", {}, "default", 0, "0", ",", "no"]
+
+# This will load the appropriate container module.
+def container_connection(args):
+    """Function removing unused values from container-compose.yml."""
+
+    # If both modules are present, podman is preferred. -d arg is needed to prioritize docker.
+    if args.docker:
+        try:
+            container = importlib.import_module("docker")
+        except ImportError:
+            print("Docker module not found.", file=sys.stderr)
+            sys.exit(1)
+    else:
+        try:
+            container = importlib.import_module("podman")
+        except ImportError:
+            try:
+                container = importlib.import_module("docker")
+            except ImportError:
+                print("Neither podman nor docker modules found.", file=sys.stderr)
+                sys.exit(1)
+
+    # Check if we have access to container service
+    try:
+        con = container.from_env()
+        con.ping()
+    except container.errors.DockerException as e:
+        print(f"An error occurred while attempting to connect to container service:\n\
+              {str(e)}", file=sys.stderr)
+        sys.exit(1)
+
+    # Return the imported module
+    return con
 
 # This will remove all values listed in the IGNORE_VALUES
 def clean_values(values) -> dict:
@@ -293,17 +318,6 @@ def render(networks, services, volumes) -> None:
 # This will generate the container-compose.yml file and print it out.
 def main() -> None:
     """Output container-compose.yml"""
-
-    # Check if we have access to container service
-    con = container.from_env()
-
-    try:
-        con.ping()
-    except container.errors.DockerException as e:
-        print(f"An error occurred while attempting to connect to container service:\n\
-              {str(e)}", file=sys.stderr)
-        sys.exit(1)
-
     # Available arguments
     parser = argparse.ArgumentParser(
         description="This tool generates a container-compose.yml from running containers",
@@ -333,12 +347,22 @@ def main() -> None:
         action="store_true",
         help="Create new volumes instead of reusing existing ones",
     )
+    parser.add_argument(
+        "-d",
+        "--docker",
+        action="store_true",
+        help="Use docker",
+    )
 
     # Parse arguments
     args = parser.parse_args()
     args.nnames = ""
     args.vnames = ""
 
+    # Create connection to containers
+    con = container_connection(args)
+
+    # Yaml structure dicts
     services = {}
     networks = {}
     volumes = {}
@@ -348,6 +372,7 @@ def main() -> None:
     networks = generate_networks(con, args)
     volumes = generate_volumes(args)
 
+    # Render the yaml file
     render(networks, services, volumes)
 
 if __name__ == "__main__":
