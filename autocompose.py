@@ -16,6 +16,7 @@ from strictyaml import as_document, YAML
 # Values that won't make the container-compose.yml
 IGNORE_VALUES = [None, "", [], "null", {}, "default", 0, "0", ",", "no"]
 
+
 # This will load the appropriate container module.
 def container_connection(args):
     """Function removing unused values from container-compose.yml."""
@@ -48,12 +49,15 @@ def container_connection(args):
         con = container.from_env()
         con.ping()
     except container.errors.DockerException as e:
-        print(f"An error occurred while attempting to connect to container service:\n\
-              {str(e)}", file=sys.stderr)
+        print(
+            f"An error occurred while attempting to connect to container service:\n{str(e)}",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     # Return the imported module
     return con
+
 
 # This will remove all values listed in the IGNORE_VALUES
 def clean_values(values) -> dict:
@@ -67,6 +71,7 @@ def clean_values(values) -> dict:
             del mapping[key]
 
     return mapping
+
 
 # This will generate the services key with the requested containers
 def generate_services(con, args) -> tuple[dict, argparse.Namespace]:
@@ -86,8 +91,11 @@ def generate_services(con, args) -> tuple[dict, argparse.Namespace]:
     # Check if containers exists
     for name in names:
         try:
-            cid = [c.short_id for c in con.containers.list(all=True) \
-                   if name in (c.short_id, c.name) or c.short_id in name][0]
+            cid = [
+                c.short_id
+                for c in con.containers.list(all=True)
+                if name in (c.short_id, c.name) or c.short_id in name
+            ][0]
         except IndexError:
             print(f"There's no container {name}.", file=sys.stderr)
             continue
@@ -108,19 +116,27 @@ def generate_services(con, args) -> tuple[dict, argparse.Namespace]:
                         "memory": str(cattrs.get("HostConfig", {}).get("Memory", None)),
                     },
                     "reservations": {
-                        "memory": str(cattrs.get("HostConfig", {}).get("MemoryReservation", None)),
+                        "memory": str(
+                            cattrs.get("HostConfig", {}).get("MemoryReservation", None)
+                        ),
                     },
                 },
                 "restart_policy": {
-                    "condition": cattrs.get("HostConfig", {}).get("RestartPolicy", {}).\
-                        get("Name", None),
-                    "max_attempts": cattrs.get("HostConfig", {}).get("RestartPolicy", {}).\
-                        get("MaximumRetryCount", None),
+                    "condition": cattrs.get("HostConfig", {})
+                    .get("RestartPolicy", {})
+                    .get("Name", None),
+                    "max_attempts": cattrs.get("HostConfig", {})
+                    .get("RestartPolicy", {})
+                    .get("MaximumRetryCount", None),
                 },
             },
             "logging": {
-                "driver": cattrs.get("HostConfig", {}).get("LogConfig", {}).get("Type", None),
-                "options": cattrs.get("HostConfig", {}).get("LogConfig", {}).get("Config", None),
+                "driver": cattrs.get("HostConfig", {})
+                .get("LogConfig", {})
+                .get("Type", None),
+                "options": cattrs.get("HostConfig", {})
+                .get("LogConfig", {})
+                .get("Config", None),
             },
             "volume_driver": cattrs.get("HostConfig", {}).get("VolumeDriver", None),
             "volumes_from": cattrs.get("HostConfig", {}).get("VolumesFrom", None),
@@ -156,11 +172,14 @@ def generate_services(con, args) -> tuple[dict, argparse.Namespace]:
 
         # Populate networks key if networks are present
         networks = [
-            x for x in cattrs.get("NetworkSettings", {}).get("Networks", {}).keys() \
-                if x not in default_networks
+            x
+            for x in cattrs.get("NetworkSettings", {}).get("Networks", {}).keys()
+            if x not in default_networks
         ]
         if networks:
-            if not any("--ip=" in x for x in cattrs.get("Config", {}).get("CreateCommand", [])):
+            if not any(
+                "--ip=" in x for x in cattrs.get("Config", {}).get("CreateCommand", [])
+            ):
                 args.nnames = f"{args.nnames} {' '.join(networks)}"
                 values["networks"] = networks
             else:
@@ -168,24 +187,28 @@ def generate_services(con, args) -> tuple[dict, argparse.Namespace]:
                 for x in cattrs.get("Config", {}).get("CreateCommand", []):
                     if "--ip=" in x:
                         values["networks"] = {
-                            networks[0]: {
-                                "ipv4_address": x.split("=")[1]
-                            }
+                            networks[0]: {"ipv4_address": x.split("=")[1]}
                         }
                         break
         elif cattrs.get("NetworkSettings", {}).get("Networks", {}) is not None:
-            values["network_mode"] = cattrs.get("HostConfig", {}).get("NetworkMode", None)
+            values["network_mode"] = cattrs.get("HostConfig", {}).get(
+                "NetworkMode", None
+            )
 
         # Populate port forwards or exposed ports if present
         values["expose"] = [
-            key.split("/")[0] for key in cattrs.get("HostConfig", {}).get("PortBindings") \
-                if cattrs.get("HostConfig", {}).get("PortBindings", {})[key] is None
+            key.split("/")[0]
+            for key in cattrs.get("HostConfig", {}).get("PortBindings")
+            if cattrs.get("HostConfig", {}).get("PortBindings", {})[key] is None
         ]
         ports = [
-            cattrs.get("HostConfig", {}).get("PortBindings", {})[key][0]["HostIp"] + ":" +
-            cattrs.get("HostConfig", {}).get("PortBindings", {})[key][0]["HostPort"] + ":" + key
-            for key in cattrs.get("HostConfig", {}).get("PortBindings") \
-                if cattrs.get("HostConfig", {}).get("PortBindings", {})[key] is not None
+            cattrs.get("HostConfig", {}).get("PortBindings", {})[key][0]["HostIp"]
+            + ":"
+            + cattrs.get("HostConfig", {}).get("PortBindings", {})[key][0]["HostPort"]
+            + ":"
+            + key
+            for key in cattrs.get("HostConfig", {}).get("PortBindings")
+            if cattrs.get("HostConfig", {}).get("PortBindings", {})[key] is not None
         ]
         if ports not in values["expose"]:
             for index, port in enumerate(ports):
@@ -199,7 +222,7 @@ def generate_services(con, args) -> tuple[dict, argparse.Namespace]:
         if commands:
             for x in commands:
                 x = '"' + x + '"' if " " in x else x
-                x = x.replace("$","$$")
+                x = x.replace("$", "$$")
                 values["command"] = " ".join([values["command"], x]).strip()
 
         # Populate entrypoint key if entrypoint is present
@@ -207,21 +230,22 @@ def generate_services(con, args) -> tuple[dict, argparse.Namespace]:
         if entrypoint and isinstance(entrypoint, list):
             for x in entrypoint:
                 x = '"' + x + '"' if " " in x else x
-                x = x.replace("$","$$")
+                x = x.replace("$", "$$")
                 values["entrypoint"] = " ".join([values["entrypoint"], x]).strip()
         else:
             values["entrypoint"] = cattrs.get("Config", {}).get("Entrypoint", None)
-
 
         # Populate ulimits key if ulimit values are present
         ulimits = cattrs.get("HostConfig", {}).get("Ulimits")
         if ulimits:
             for x in ulimits:
                 if x["Soft"] == x["Hard"]:
-                    ulimit = { x["Name"].replace('RLIMIT_', '').lower(): x["Hard"] }
+                    ulimit = {x["Name"].replace("RLIMIT_", "").lower(): x["Hard"]}
                 else:
                     ulimit = {
-                        x["Name"].replace('RLIMIT_', '').lower(): {
+                        x["Name"]
+                        .replace("RLIMIT_", "")
+                        .lower(): {
                             "soft": x["Soft"],
                             "hard": x["Hard"],
                         }
@@ -231,15 +255,15 @@ def generate_services(con, args) -> tuple[dict, argparse.Namespace]:
         # Populate sysctls key if sysctls are present
         create_command = cattrs.get("Config", {}).get("CreateCommand", [])
         if create_command:
-            sysctls = [i+1 for i, x in enumerate(create_command) if x == "--sysctl"]
+            sysctls = [i + 1 for i, x in enumerate(create_command) if x == "--sysctl"]
             values["sysctls"] = [create_command[i] for i in sysctls]
 
         # Populate devices key if device values are present
         devices = cattrs.get("HostConfig", {}).get("Devices")
         if devices:
             values["devices"] = [
-                x["PathOnHost"] + ":" + x["PathInContainer"] \
-                    for x in cattrs.get("HostConfig", {}).get("Devices")
+                x["PathOnHost"] + ":" + x["PathInContainer"]
+                for x in cattrs.get("HostConfig", {}).get("Devices")
             ]
 
         # Populate volumes key if volumes are present
@@ -259,6 +283,7 @@ def generate_services(con, args) -> tuple[dict, argparse.Namespace]:
 
     return services, args
 
+
 # This will generate the networks associated to the requested containers
 def generate_networks(con, args) -> dict:
     """Function for creating the networks key"""
@@ -272,8 +297,7 @@ def generate_networks(con, args) -> dict:
     # Build network yaml dict structure
     for name in names:
         try:
-            nname = [n.name for n in con.networks.list(all=True) \
-                   if name == n.name][0]
+            nname = [n.name for n in con.networks.list(all=True) if name == n.name][0]
         except IndexError:
             print(f"There's no network {name}.", file=sys.stderr)
             continue
@@ -295,6 +319,7 @@ def generate_networks(con, args) -> dict:
 
     return networks
 
+
 # This will generate the networks associated to the requested containers
 def generate_volumes(args) -> dict:
     """Function for creating the networks key"""
@@ -303,16 +328,15 @@ def generate_volumes(args) -> dict:
 
     # Build volumes yaml dict structure
     for name in names:
-        volumes[name] = {
-            "external": True
-        }
+        volumes[name] = {"external": True}
 
     return volumes
+
 
 # This will send the yaml file to stdout
 def render(networks, services, volumes) -> None:
     """Function for rendering container-compose.yml."""
-    file = {"version": '3.8'}
+    file = {"version": "3.8"}
 
     file["networks"] = networks
     file["services"] = services
@@ -320,6 +344,7 @@ def render(networks, services, volumes) -> None:
 
     yaml = YAML(as_document(clean_values(OrderedDict(file))).as_yaml())
     print(f"---\n{yaml.data}...")
+
 
 # This will generate the container-compose.yml file and print it out.
 def main() -> None:
@@ -386,6 +411,7 @@ def main() -> None:
 
     # Render the yaml file
     render(networks, services, volumes)
+
 
 if __name__ == "__main__":
     main()
