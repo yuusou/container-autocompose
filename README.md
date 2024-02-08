@@ -29,6 +29,13 @@ Generate a compose file for multiple containers together:
 If you get an error requiring CONTAINER_HOST or DOCKER_HOST environment variable, try the following (adjusting as necessary):
 ```CONTAINER_HOST=unix:///var/run/podman/podman.sock sudo python3 autocompose.py -a```
 
+If both docker and podman modules are installed, podman is preferred.
+Force docker with the `-d` or `--docker` argument:
+```sudo python3 autocompose.py -d -a```
+
+You can also implicitly only check for podman with the `-p` or `--podman` argument:
+```sudo python3 autocompose.py -p -a```
+
 ## References
 Outputs yaml to stdout compatible with podman-compose and docker-compose (right now there's no difference between them):
 * [podman-compose reference](https://github.com/containers/podman-compose)

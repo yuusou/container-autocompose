@@ -21,7 +21,13 @@ def container_connection(args):
     """Function removing unused values from container-compose.yml."""
 
     # If both modules are present, podman is preferred. -d arg is needed to prioritize docker.
-    if args.docker:
+    if args.podman:
+        try:
+            container = importlib.import_module("podman")
+        except ImportError:
+            print("Podman module not found.", file=sys.stderr)
+            sys.exit(1)
+    elif args.docker:
         try:
             container = importlib.import_module("docker")
         except ImportError:
@@ -346,6 +352,12 @@ def main() -> None:
         "--createvolumes",
         action="store_true",
         help="Create new volumes instead of reusing existing ones",
+    )
+    parser.add_argument(
+        "-p",
+        "--podman",
+        action="store_true",
+        help="Use docker",
     )
     parser.add_argument(
         "-d",
